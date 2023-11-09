@@ -1,10 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "TPSPlayer.generated.h"
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FInputBindingDelegate, class UEnhancedInputComponent*);
 
 UCLASS()
 class TPSPROJECT_API ATPSPlayer : public ACharacter
@@ -12,18 +12,17 @@ class TPSPROJECT_API ATPSPlayer : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
+	// 입력바인딩 델리게이트
+	FInputBindingDelegate onInputBindingDelegate;
+
 	ATPSPlayer();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -35,102 +34,38 @@ public:
 public:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	class UInputMappingContext* imc_TPS;
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	class UInputAction* ia_LookUp;
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	class UInputAction* ia_Turn;
-
-	// 좌우 회전 입력 처리
-	void Turn(const struct FInputActionValue& inputValue);
-	// 상하 회전 입력 처리
-	void LookUp(const struct FInputActionValue& inputValue);
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* ia_Move;
-	// 걷기속도
-	UPROPERTY(EditAnywhere, Category = PlayerSetting)
-	float walkSpeed = 200;
-	// 달기기 속도
-	UPROPERTY(EditAnywhere, Category = PlayerSetting)
-	float runSpeed = 600;
-
-	// 이동방향
-	FVector direction;
-
-	void Move(const struct FInputActionValue& inputValue);
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* ia_Jump;
-	// 점프 입력 이벤트 처리함수
-	void InputJump(const struct FInputActionValue& inputValue);
-
-	// 플레이어 이동처리
-	void PlayerMove();
-
+	
 	// 총 스켈레탈메쉬
 	UPROPERTY(VisibleAnywhere, Category=GunMesh)
 	class USkeletalMeshComponent* gunMeshComp;
-
-	// 총알공장
-	UPROPERTY(EditDefaultsOnly, Category=BulletFactory)
-	TSubclassOf<class ABullet> bulletFactory;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* ia_Fire;
-	// 총알 발사 처리함수
-	void InputFire(const struct FInputActionValue& inputValue);
 
 	// 스나이퍼건 스테틱메쉬 추가
 	UPROPERTY(VisibleAnywhere, Category=GunMesh)
 	class UStaticMeshComponent* sniperGunComp;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* ia_GrenadeGun;
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* ia_SniperGun;
-	// 유탄총 사용중인지 여부
-	bool bUsingGrenadeGun = true;
-	// 유탄총으로 변경
-	void ChangeToGrenadeGun(const struct FInputActionValue& inputValue);
-	// 스나이퍼건으로 변경
-	void ChangeToSniperGun(const struct FInputActionValue& inputValue);
+public:
+	UPROPERTY(VisibleAnywhere, Category = Component)
+	class UPlayerBaseComponent* playerMove;
+	UPROPERTY(VisibleAnywhere, Category = Component)
+	class UPlayerBaseComponent* playerFire;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* ia_Sniper;
-	// 스나이퍼 조준처리함수
-	void SniperAim(const struct FInputActionValue& inputValue);
-	// 스나이퍼 조준 중인지 여부
-	bool bSniperAim = false;
-	// 스나이퍼 UI 위젯 공장
-	UPROPERTY(EditDefaultsOnly, Category=SniperUI)
-	TSubclassOf<class UUserWidget> sniperUIFactory;
-	// 스나이퍼 UI 위젯 인스턴스
-	UPROPERTY()
-	class UUserWidget* _sniperUI;
+	// 현재체력
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=Health)
+	int32 hp;
+	// 초기 hp 값
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Health)
+	int32 initialHp = 10;
 
-	// 총알파편효과 공장
-	UPROPERTY(EditAnywhere, Category=BulletEffect)
-	class UParticleSystem* bulletEffectFactory;
+	// 피격 받았을 때 처리
+	UFUNCTION(BlueprintCallable, Category = Health)
+	void OnHitEvent();
 
-	// 일반 조준 크로스헤어UI 위젯
-	UPROPERTY(EditDefaultsOnly, Category = SniperUI)
-	TSubclassOf<class UUserWidget> crosshairUIFactory;
-	// 크로스헤어 인스턴스
-	UPROPERTY()
-	class UUserWidget* _crosshairUI;
+	// 게임오버 될 때 호출될 함수
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Health)
+	void OnGameOver();
 
-	// 달리기 입력
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputAction* ia_Run;
-	// 달리기 이벤트 처리함수
-	void InputRun();
-
-	// 카메라셰이크 블루프린트를 저장할 변수
-	UPROPERTY(EditDefaultsOnly, Category=CameraMotion)
-	TSubclassOf<class UCameraShakeBase> cameraShake;
-
-	// 총알 발사 사운드
-	UPROPERTY(EditDefaultsOnly, Category=Sound)
-	class USoundBase* bulletSound;
+	// 총 바꿀 때 호출되는 이벤트 함수
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = Health)
+	void OnUsingGrenade(bool isGrenade);
 
 };
